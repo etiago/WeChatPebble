@@ -9,8 +9,21 @@
     tools:context=".MainActivity" >
 
     <TextView
+        android:id="@+id/textIntro"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/hello_world" />
+        android:text="@string/intro"
+        />
+
+    <Button
+        android:id="@+id/btnAccessibilitySettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textIntro"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="41dp"
+        android:text="@string/buttonAccessibility"
+    	android:onClick="btnAccessibility_click"    
+	/>
 
 </RelativeLayout>

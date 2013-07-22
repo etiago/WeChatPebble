@@ -4,5 +4,12 @@
     <string name="app_name">WeChatPebble</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-
+    <string name="title_activity_main">WeChat Pebble</string>
+	<string name="intro">
+	    Thanks for installing WeChatPebble! Please be aware that you do not need to launch this app. Instead, you need to enable its service in the Accessibility Settings.\n\n
+	    
+	    By enabling this service, you will see a warning about collecting keystrokes. Rest assured that no such thing is done and as this app does not require the Internet connection permissions, there is nothing that it could do with any such data.
+	</string>
+	<string name="buttonAccessibility">Accessibility Settings</string>
+	<string name="action_about">About</string>
 </resources>
