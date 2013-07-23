@@ -26,4 +26,15 @@
     	android:onClick="btnAccessibility_click"    
 	/>
 
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnAccessibilitySettings"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="17dp"
+        android:text="Test" 
+        android:onClick="btnTestClick"
+        />
+
 </RelativeLayout>
