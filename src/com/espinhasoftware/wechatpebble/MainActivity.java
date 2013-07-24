@@ -43,10 +43,42 @@ public class MainActivity extends Activity {
 		return true;
 	}
 	
+	public byte[] hex2Byte(String str)
+    {
+       byte[] bytes = new byte[str.length() / 2];
+       for (int i = 0; i < bytes.length; i++)
+       {
+          bytes[i] = (byte) Integer
+                .parseInt(str.substring(2 * i, 2 * i + 2), 16);
+       }
+       return bytes;
+    }
+	
 	public void btnTestClick(View v) {
 		PebbleDictionary data = new PebbleDictionary();
-		data.addString(1, "blah");
+		String hao = "100010FC10041008FC102420242025FE24204820282010202820442084A00040";
 		
+		byte[][] character = new byte[16][2];
+		
+		int i = 0;
+		while (hao.length() > 0) {
+            String temp = hao.substring(0,4);
+            
+            hao = hao.substring(4);
+            
+            int value = Integer.parseInt(temp, 16);  
+            
+            byte[] end = new byte[2];
+            
+            end[1] = (byte) (value & 0xFF);
+            end[0] = (byte) ((value >>> 8) & 0xFF);   
+            
+            character[i] = end;
+            
+            i++;
+        }
+		
+		data.addBytes(1, );
 		PebbleAckReceiver ack = new PebbleAckReceiver(WECHATPEBBLE_UUID) {
 			
 			@Override
