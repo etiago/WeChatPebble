@@ -5,9 +5,11 @@
     android:versionName="1.2" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="9"
         android:targetSdkVersion="17" />
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    
     <application
         android:allowBackup="true"
         android:icon="@drawable/wechatpebble"
@@ -26,7 +28,7 @@
         </activity>
         -->
         <service
-            android:name="com.espinhasoftware.wechatpebble.HandleWeChat"
+            android:name="com.espinhasoftware.wechatpebble.service.HandleWeChat"
             android:enabled="true"
             android:exported="false"
             android:label="@string/app_name"
@@ -36,6 +38,9 @@
             </intent-filter>
         </service>
 
+        <service android:name="com.espinhasoftware.wechatpebble.service.MessageProcessingService" ></service>
+        <service android:name="com.espinhasoftware.wechatpebble.service.PebbleCommService" ></service>
+        
         <activity
             android:name="com.espinhasoftware.wechatpebble.MainActivity"
             android:label="@string/title_activity_main" >
@@ -44,6 +49,14 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="com.espinhasoftware.wechatpebble.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName="com.espinhasoftware.wechatpebble.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.espinhasoftware.wechatpebble.MainActivity" />
         </activity>
     </application>
 

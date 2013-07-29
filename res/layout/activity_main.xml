@@ -12,8 +12,7 @@
         android:id="@+id/textIntro"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/intro"
-        />
+        android:text="@string/intro" />
 
     <Button
         android:id="@+id/btnAccessibilitySettings"
@@ -22,11 +21,10 @@
         android:layout_below="@+id/textIntro"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="41dp"
-        android:text="@string/buttonAccessibility"
-    	android:onClick="btnAccessibility_click"    
-	/>
+        android:onClick="btnAccessibility_click"
+        android:text="@string/buttonAccessibility" />
 
-    <Button
+    <!-- <Button
         android:id="@+id/button1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -48,9 +46,10 @@
         android:inputType="text" >
 
         <requestFocus />
-    </EditText>
+    </EditText> -->
 
     <FrameLayout
+        android:id="@+id/frameLayout1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textIntro"
@@ -59,4 +58,14 @@
         android:layout_marginTop="15dp" >
     </FrameLayout>
 
+    <!-- <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/frameLayout1"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="31dp"
+        android:onClick="btnRefreshClick"
+        android:text="Send refresh" />
+	 -->
 </RelativeLayout>
