@@ -50,7 +50,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         
         
         this._causingActivity = causingActivity;
-        //this._db = getWritableDatabase();
     }
  
     // Creating Tables
@@ -61,12 +60,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     	new Thread(new Runnable() {
     		private void addMultipleFontsx(List<Font> fonts, SQLiteDatabase db) {   	     	        
     			StringBuilder b = new StringBuilder();
-    			
-//    			INSERT INTO 'tablename'
-//    		      SELECT 'data1' AS 'column1', 'data2' AS 'column2'
-//    		UNION SELECT 'data3', 'data4'
-//    		UNION SELECT 'data5', 'data6'
-//    		UNION SELECT 'data7', 'data8'
     		
     			Font first = fonts.get(0);
     			b.append("INSERT INTO '"+TABLE_HEX+"' " +
@@ -78,10 +71,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     	        for(Font f : fonts) {
     	        	b.append("UNION SELECT '"+f.getCodepoint()+"', '"+f.getHex()+"' ");
     	        }
-    	        
-    	        //System.out.println("Inserting "+values.size());
-    	        // Inserting Row
-    	        //db.insertOrThrow(TABLE_HEX, null, values);
     	        
     	        db.execSQL(b.toString());
     	        
@@ -241,8 +230,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     
 	public void open() throws SQLException {
 		_db = this.getWritableDatabase();
-	    
-		
 	}
 
   public void close() {
