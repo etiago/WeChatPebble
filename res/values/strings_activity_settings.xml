@@ -15,8 +15,8 @@
     </string-array>
     
     <string-array name="pref_notification_type_values">
-        <item>STD_NO_PINYIN</item>
         <item>STD_PINYIN</item>
+        <item>STD_NO_PINYIN</item>
         <item>UNICODE_BITMAP</item>
     </string-array>
     

@@ -70,6 +70,8 @@ public class HandleWeChat extends AccessibilityService {
 	class MessageProcessingIncomingHandler extends Handler {
 	    @Override
 	    public void handleMessage(Message msg) {
+	    	Integer message_timeout = Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("message_type", "-100"));
+			  
 	        switch (msg.what) {
 	            case MessageProcessingService.MSG_REPLY_PROCESSED_MSG:
 	            	Bundle b = msg.getData();
@@ -80,11 +82,11 @@ public class HandleWeChat extends AccessibilityService {
 	            	if (b.containsKey(MessageProcessingService.KEY_RPL_PBL_MSG)) {
 	            		PebbleMessage message = (PebbleMessage)b.getSerializable(MessageProcessingService.KEY_RPL_PBL_MSG);
 	            		
-	            		sendMessageToPebbleComm(message);
+	            		sendMessageToPebbleComm(message, message_timeout);
 	            	} else if (b.containsKey(MessageProcessingService.KEY_RPL_STR)) {
 	            		String message = (String)b.getString(MessageProcessingService.KEY_RPL_STR);
 	            		
-	            		sendMessageToPebbleComm(message);
+	            		sendMessageToPebbleComm(message, message_timeout);
 	            	}
 	                break;
 	            default:
@@ -92,13 +94,15 @@ public class HandleWeChat extends AccessibilityService {
 	        }
 	    }
 	    
-	    private void sendMessageToPebbleComm(PebbleMessage message) {
+	    private void sendMessageToPebbleComm(PebbleMessage message, int timeout) {
 			  try {
 		            Message msg = Message.obtain(null,
 		                    PebbleCommService.MSG_SEND_DATA_TO_PEBBLE);
 		            msg.replyTo = mMessengerPebbleComm;
 		            
 		            msg.arg1 = PebbleCommService.TYPE_DATA_PBL_MSG;
+		            
+		            msg.arg2 = timeout * 1000;
 		            
 		            Bundle b = new Bundle();
 		            b.putSerializable(PebbleCommService.KEY_MESSAGE, message);
@@ -114,13 +118,15 @@ public class HandleWeChat extends AccessibilityService {
 		        }
 	    }
 	    
-	    private void sendMessageToPebbleComm(String message) {
+	    private void sendMessageToPebbleComm(String message, int timeout) {
 			  try {
 		            Message msg = Message.obtain(null,
 		                    PebbleCommService.MSG_SEND_DATA_TO_PEBBLE);
 		            msg.replyTo = mMessengerPebbleComm;
 		            
 		            msg.arg1 = PebbleCommService.TYPE_DATA_STR;
+		            
+		            msg.arg2 = timeout;
 		            
 		            Bundle b = new Bundle();
 		            b.putString(PebbleCommService.KEY_MESSAGE, message);
@@ -262,7 +268,7 @@ public class HandleWeChat extends AccessibilityService {
 		          MessageProcessingService.MSG_SEND_ORIGINAL_MSG);
 		  msg.replyTo = mMessengerMessageProcessing;
 		  
-		  String message_type = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("message_type", null);
+		  String message_type = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("message_type", "FAIL");
 		  
 		  if (message_type.equals("STD_NO_PINYIN")) {
 			  msg.arg1 = MessageProcessingService.PROCESS_NO_PINYIN;
@@ -270,6 +276,9 @@ public class HandleWeChat extends AccessibilityService {
 			  msg.arg1 = MessageProcessingService.PROCESS_PINYIN;
 		  } else if (message_type.equals("UNICODE_BITMAP")) {
 			  msg.arg1 = MessageProcessingService.PROCESS_UNIFONT;
+		  } else {
+			  Log.d("HandleWeChat", "Cancelling send... could not find send type. Message type: "+message_type);
+			  return;
 		  }
 		  
 		  

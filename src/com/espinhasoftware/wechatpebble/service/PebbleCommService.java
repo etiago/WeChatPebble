@@ -34,7 +34,7 @@ import android.util.Log;
 
 public class PebbleCommService extends Service {
 	private static PebbleMessage message;
-
+	private static int timeout;
 
     /**
      * Command to the service to register a client, receiving callbacks
@@ -59,6 +59,8 @@ public class PebbleCommService extends Service {
                 case PebbleCommService.MSG_SEND_DATA_TO_PEBBLE:
                 	if (msg.arg1 == PebbleCommService.TYPE_DATA_PBL_MSG) {
                 		PebbleMessage pb = (PebbleMessage)msg.getData().getSerializable(PebbleCommService.KEY_MESSAGE);
+                		
+                		PebbleCommService.timeout = msg.arg2;
                 		
                 		sendAlertToPebble(pb, true);
                 	} else if (msg.arg1 == PebbleCommService.TYPE_DATA_STR) {
@@ -115,7 +117,7 @@ public class PebbleCommService extends Service {
     					@Override
     					public void run() {
     						try {
-    							Thread.sleep(10000);
+    							Thread.sleep(timeout);
     						} catch (InterruptedException e) {
     							Log.d("HandleWeChat", "Problem while sleeping");
     						}
