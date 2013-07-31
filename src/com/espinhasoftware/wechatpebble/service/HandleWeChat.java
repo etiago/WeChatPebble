@@ -27,7 +27,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -70,7 +69,7 @@ public class HandleWeChat extends AccessibilityService {
 	class MessageProcessingIncomingHandler extends Handler {
 	    @Override
 	    public void handleMessage(Message msg) {
-	    	Integer message_timeout = Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("message_type", "-100"));
+	    	Integer message_timeout = Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("message_timeout", "-100"));
 			  
 	        switch (msg.what) {
 	            case MessageProcessingService.MSG_REPLY_PROCESSED_MSG:

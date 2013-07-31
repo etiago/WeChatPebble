@@ -160,7 +160,7 @@ public class MessageProcessingService extends Service {
 	    		Log.e("MessagProcessing", "Database not ready after waiting!");
 	    	}
 	    	
-	    	PebbleMessage message = new PebbleMessage(MessageProcessingService._context);
+	    	PebbleMessage message = new PebbleMessage();
 	    	
 			// Clear the characterQueue, just in case
 			Deque<CharacterMatrix> characterQueue = new ArrayDeque<CharacterMatrix>();

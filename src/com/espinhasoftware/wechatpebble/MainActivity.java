@@ -40,7 +40,8 @@ public class MainActivity extends Activity {
 	}
 	
 	public void btnAccessibility_click(View v) {
-		startActivityForResult(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS), 0);
+		startActivityForResult(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
+					.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY), 0);
 	}
 	
 	public boolean btnSettings_click(MenuItem mi) {

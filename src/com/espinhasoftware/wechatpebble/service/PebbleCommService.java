@@ -5,13 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import net.sourceforge.pinyin4j.PinyinHelper;
-import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
-import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
-import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
-import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
-import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -84,7 +77,7 @@ public class PebbleCommService extends Service {
     
     @Override
     public void onCreate() {
-    	message = new PebbleMessage(getApplicationContext());
+    	message = new PebbleMessage();
     	_context = getApplicationContext();
     	
     	PebbleKit.registerReceivedDataHandler(getApplicationContext(), new PebbleDataReceiver(PebbleMessage.WECHATPEBBLE_UUID) {
