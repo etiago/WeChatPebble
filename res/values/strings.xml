@@ -2,16 +2,20 @@
 <resources>
 
     <string name="app_name">WeChatPebble</string>
-    <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_main">WeChat Pebble</string>
 	<string name="intro">
 	    Thanks for installing WeChatPebble! Please be aware that you do not need to launch this app. Instead, you need to enable its service in the Accessibility Settings.\n\n
 	    
-	    By enabling this service, you will see a warning about collecting keystrokes. Rest assured that no such thing is done and as this app does not require the Internet connection permissions, there is nothing that it could do with any such data.
+	    By enabling this service, you will see a warning about collecting keystrokes. Rest assured that no such thing is done and as this app does not require the Internet connection permissions, there is nothing that it could do with any such data.\n\n
+	    
+	    If this is the first time you are running WeChatPebble please wait for the database to be generated (wait for the running notification to finish).
 	</string>
 	<string name="buttonAccessibility">Accessibility Settings</string>
 	<string name="action_about">About</string>
-	<string name="msg_generating_db">Loading database with characters. Please wait, this may take a few seconds.</string>
+	<string name="action_settings">Settings</string>
+	<!--<string name="msg_generating_db">Loading database with characters. Please wait, this may take a few seconds.</string> -->
 	
+	<string name="notif_started_loading">Creating Unicode character database&#8230;</string>
+	<string name="notif_finished_loading">Finished loading font database! Tap to dismiss&#8320;</string>
 </resources>

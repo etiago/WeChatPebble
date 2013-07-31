@@ -3,12 +3,20 @@ package com.espinhasoftware.wechatpebble.service;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
+
 import com.espinhasoftware.wechatpebble.MainActivity;
 import com.espinhasoftware.wechatpebble.db.DatabaseHandler;
 import com.espinhasoftware.wechatpebble.model.CharacterMatrix;
 import com.espinhasoftware.wechatpebble.pebblecomm.PebbleMessage;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,13 +37,16 @@ public class MessageProcessingService extends Service {
 	
 	public static final int PROCESS_UNIFONT = 1;
 	public static final int PROCESS_PINYIN = 2;
+	public static final int PROCESS_NO_PINYIN = 3;
 	
-	private DatabaseHandler db;
+	private static DatabaseHandler db;
+	
+	private static Context _context;
 	
 	/**
 	 * Handler of incoming messages from PebbleCommService.
 	 */
-	class HandleWeChatIncomingHandler extends Handler {
+	static class HandleWeChatIncomingHandler extends Handler {
 	    @Override
 	    public void handleMessage(Message msg) {
 	        switch (msg.what) {
@@ -58,13 +69,37 @@ public class MessageProcessingService extends Service {
 	                	reply.setData(b);
 		                
 		                try {
-		                	Log.d("MessageProcessing", "Replied to HandleWeChat");
+		                	Log.d("MessageProcessing", "Replied to HandleWeChat with Unifont");
 							replyChannel.send(reply);
 						} catch (RemoteException e) {
-							Log.d("MessageProcessing", "Exception replying to HandleWeChat");
+							Log.d("MessageProcessing", "Exception replying to HandleWeChat with Unifont");
 						}
 	                } else if (msg.arg1 == MessageProcessingService.PROCESS_PINYIN) {
-	                	// TODO: Just process pinyin
+	                	// pass through
+	                	Bundle b = new Bundle();
+	                	b.putSerializable(MessageProcessingService.KEY_RPL_STR, processMessageString(originalMessage));
+	                	
+	                	reply.setData(b);
+	                	
+	                	try {
+		                	Log.d("MessageProcessing", "Replied to HandleWeChat with PinYin");
+							replyChannel.send(reply);
+						} catch (RemoteException e) {
+							Log.d("MessageProcessing", "Exception replying to HandleWeChat with PinYin");
+						}
+	                } else if (msg.arg1 == MessageProcessingService.PROCESS_NO_PINYIN) {
+	                	// pass through
+	                	Bundle b = new Bundle();
+	                	b.putSerializable(MessageProcessingService.KEY_RPL_STR, originalMessage);
+	                	
+	                	reply.setData(b);
+	                	
+	                	try {
+		                	Log.d("MessageProcessing", "Replied to HandleWeChat without PinYin");
+							replyChannel.send(reply);
+						} catch (RemoteException e) {
+							Log.d("MessageProcessing", "Exception replying to HandleWeChat without PinYin");
+						}
 	                }
 	                break;
 	            default:
@@ -72,8 +107,60 @@ public class MessageProcessingService extends Service {
 	        }
 	    }
 	    
+	    private boolean isDatabaseReady() {
+	    	if (db.finishedLoading) return true;
+	    	
+	    	int maxWaitMilis = 15000;
+	    	int waited = 0;
+	    	
+	    	int previousLoaded = -1;
+	    	while(waited < maxWaitMilis) {
+	    		if (db.recordsLoaded > previousLoaded) {
+	    			previousLoaded = db.recordsLoaded;
+	    			try {
+						Thread.currentThread().sleep(500);
+					} catch (InterruptedException e) {}
+	    			
+	    			waited += 500;
+	    		}
+	    		
+	    		if (db.recordsLoaded == db.FILE_LINECOUNT) {
+	    			return true;
+	    		}
+	    	}
+	    	
+	    	return false;
+	    }
+	    
+	    /**
+	     * Sends alerts to the Pebble watch, as per the Pebble app's intents
+	     * @param alert Alert which to send to the watch.
+	     */
+	    private static String processMessageString(String originalMessage) {
+	    	// This is the traditional Pebble alert which does not show Unicode characters
+	    	HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
+	    	format.setCaseType(HanyuPinyinCaseType.LOWERCASE);
+	    	format.setToneType(HanyuPinyinToneType.WITH_TONE_NUMBER);
+	    	format.setVCharType(HanyuPinyinVCharType.WITH_V);
+				
+	    	try {
+	    		// I know this is deprecated but there's no viable alternative...
+	    		return PinyinHelper.toHanyuPinyinString(originalMessage, format , "");
+	    	} catch (BadHanyuPinyinOutputFormatCombination e) {
+	    		Log.e("Pinyin", "Failed to convert pinyin");
+	    	}
+			  
+	    	return "";
+	    }
+	    
 	    private PebbleMessage processMessage(String originalMessage) {
-	    	PebbleMessage message = new PebbleMessage(getApplicationContext());
+	    	// This method not only polls the database but waits for it to be ready
+	    	// in the event it is loading.
+	    	if (!isDatabaseReady()) {
+	    		Log.e("MessagProcessing", "Database not ready after waiting!");
+	    	}
+	    	
+	    	PebbleMessage message = new PebbleMessage(MessageProcessingService._context);
 	    	
 			// Clear the characterQueue, just in case
 			Deque<CharacterMatrix> characterQueue = new ArrayDeque<CharacterMatrix>();
@@ -106,6 +193,8 @@ public class MessageProcessingService extends Service {
 	
     @Override
     public void onCreate() {
+    	MessageProcessingService._context = getApplicationContext();
+    	
     	db = new DatabaseHandler(getApplicationContext(), new MainActivity());
     	
     	db.open();

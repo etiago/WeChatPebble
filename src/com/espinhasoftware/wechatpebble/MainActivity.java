@@ -1,48 +1,25 @@
 package com.espinhasoftware.wechatpebble;
 
-
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Stack;
-import java.util.UUID;
-
-
-import com.espinhasoftware.wechatpebble.db.DatabaseHandler;
-import com.espinhasoftware.wechatpebble.model.CharacterMatrix;
 import com.espinhasoftware.wechatpebble.pebblecomm.PebbleMessage;
 import com.espinhasoftware.wechatpebble.service.MessageProcessingService;
 import com.espinhasoftware.wechatpebble.service.PebbleCommService;
 import com.getpebble.android.kit.PebbleKit;
-import com.getpebble.android.kit.PebbleKit.PebbleAckReceiver;
-import com.getpebble.android.kit.PebbleKit.PebbleNackReceiver;
-import com.getpebble.android.kit.PebbleKit.PebbleDataReceiver;
 
 import com.getpebble.android.kit.util.PebbleDictionary;
 
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-	
-	
-	//private static Deque<CharacterMatrix> characterQueue = new ArrayDeque<CharacterMatrix>(64);
-	
-	private PebbleMessage message;
-	private static DatabaseHandler db;
-	
-	private ProgressDialog wait;
-	
+		
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -61,45 +38,24 @@ public class MainActivity extends Activity {
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
-
-	public void showWaitGenerateDB() {
-		if (wait != null) {
-			return;
-		}
-		wait = new ProgressDialog(this);
-
-		wait.setMessage(this.getString(R.string.msg_generating_db));
-		wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		wait.setCancelable(false);
-		
-		wait.show();
-	}
-	
-	public void hideWaitGenerateDB() {
-		if (wait == null) {
-			return;
-		}
-		
-		if (db.verifyIntegrity() == false) {
-			db.verifyIntegrity();
-		}
-		
-		wait.hide();
-	}
 	
 	public void btnAccessibility_click(View v) {
 		startActivityForResult(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS), 0);
 	}
 	
+	public boolean btnSettings_click(MenuItem mi) {
+		Intent intent = new Intent(this, SettingsActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+		
+		startActivity(intent);
+		
+		return true;
+	}
+	
 	public boolean btnAbout_click(MenuItem mi) {
+		//Toast.makeText(getApplicationContext(), "Blah ", Toast.LENGTH_SHORT).show();
 		
 		Toast.makeText(getApplicationContext(), "Copyright \u00A9 2013 - Tiago Espinha", Toast.LENGTH_SHORT).show();
-		
-//		Intent intent = new Intent(this, SettingsActivity.class);
-//		intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-//		
-//		startActivity(intent);
-		//activityContext.startActivity(intent);
 		
 		return true;
 	}

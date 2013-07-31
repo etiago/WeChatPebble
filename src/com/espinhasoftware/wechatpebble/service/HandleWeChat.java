@@ -17,6 +17,7 @@
  */
 package com.espinhasoftware.wechatpebble.service;
 
+import com.espinhasoftware.wechatpebble.R;
 import com.espinhasoftware.wechatpebble.pebblecomm.PebbleMessage;
 
 import android.accessibilityservice.AccessibilityService;
@@ -26,12 +27,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
@@ -202,10 +205,21 @@ public class HandleWeChat extends AccessibilityService {
 	    }
 	};
 	
+//	private ComponentName mComponentPebbleComm;
+//	private ComponentName mComponentMessageProcessing;
+	
+	private void setupDefaultPreferences() {
+		PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
+	}
+	
     @Override
     public void onServiceConnected()
     {
+//		mComponentPebbleComm = startService(new Intent(HandleWeChat.this, PebbleCommService.class));
+//		mComponentMessageProcessing = startService(new Intent(HandleWeChat.this, MessageProcessingService.class));
 		
+    	setupDefaultPreferences();
+    	
 		bindService(new Intent(HandleWeChat.this, PebbleCommService.class), mConnectionPebbleComm, Context.BIND_AUTO_CREATE);
 		bindService(new Intent(HandleWeChat.this, MessageProcessingService.class), mConnectionMessageProcessing, Context.BIND_AUTO_CREATE);
 		
@@ -214,13 +228,27 @@ public class HandleWeChat extends AccessibilityService {
         info.notificationTimeout = 100;
         info.feedbackType = AccessibilityEvent.TYPES_ALL_MASK;
         info.packageNames = new String[]{"com.tencent.mm"};;
-        
+
         setServiceInfo(info);
+    }
+    
+    @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	
+    	unbindService(mConnectionMessageProcessing);
+    	unbindService(mConnectionPebbleComm);
+    	
+//    	stopService(new Intent(HandleWeChat.this, PebbleCommService.class));
+//    	stopService(new Intent(HandleWeChat.this, MessageProcessingService.class));
     }
 	
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event)
     {
+    	// Getting rid of toast events
+    	if (event.getClassName().toString().contains("android.widget.Toast")) return;
+    	
 		if (!mPebbleCommIsBound) {
 			Log.d("PBL_HandleWeChat", "Comm Service not bound! Can't send message.");
 			return;
@@ -234,9 +262,16 @@ public class HandleWeChat extends AccessibilityService {
 		          MessageProcessingService.MSG_SEND_ORIGINAL_MSG);
 		  msg.replyTo = mMessengerMessageProcessing;
 		  
-		  // TODO: msg.arg1 set type of conversion
-		  // For now it's hardcoded
-		  msg.arg1 = MessageProcessingService.PROCESS_UNIFONT;
+		  String message_type = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("message_type", null);
+		  
+		  if (message_type.equals("STD_NO_PINYIN")) {
+			  msg.arg1 = MessageProcessingService.PROCESS_NO_PINYIN;
+		  } else if (message_type.equals("STD_PINYIN")) {
+			  msg.arg1 = MessageProcessingService.PROCESS_PINYIN;
+		  } else if (message_type.equals("UNICODE_BITMAP")) {
+			  msg.arg1 = MessageProcessingService.PROCESS_UNIFONT;
+		  }
+		  
 		  
 		  Bundle b = new Bundle();
 		  b.putString(MessageProcessingService.KEY_ORIGINAL_MSG, originalMsg);

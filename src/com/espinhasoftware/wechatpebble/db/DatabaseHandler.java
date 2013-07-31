@@ -7,16 +7,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.espinhasoftware.wechatpebble.MainActivity;
+import com.espinhasoftware.wechatpebble.R;
 import com.espinhasoftware.wechatpebble.model.Font;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 public class DatabaseHandler extends SQLiteOpenHelper {
@@ -35,27 +42,34 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_CODEPOINT = "unicode_codepoint";
     private static final String KEY_HEX = "unicode_hex";
  
-    private static final int FILE_LINECOUNT = 63446;
+    public static final int FILE_LINECOUNT = 63446;
     
-    private static Context _context;
+    private Context _context;
  
     private SQLiteDatabase _db;
     
-    private MainActivity _causingActivity;
+    private DatabaseLoadNotifier _notifier;
+    
+    private static boolean dirty = false;
+    //private MainActivity _causingActivity;
+    
+    public static boolean finishedLoading = false;
+    public static int recordsLoaded = 0;
     
     public DatabaseHandler(Context context, MainActivity causingActivity) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         
-        DatabaseHandler._context = context;
+        this._context = context;
         
-        
-        this._causingActivity = causingActivity;
+        this._notifier = new DatabaseLoadNotifier(context);
+        //this._causingActivity = causingActivity;
     }
  
     // Creating Tables
     @Override
     public void onCreate(SQLiteDatabase db) {
     	final SQLiteDatabase dbThread = db;
+    	DatabaseHandler.dirty = true;
     	
     	new Thread(new Runnable() {
     		private void addMultipleFontsx(List<Font> fonts, SQLiteDatabase db) {   	     	        
@@ -78,14 +92,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     	    }
     		
             public void run() {
-            	Log.i("Database","Starting db creation");
+            	Log.d("Database","Starting db creation");
             	
-            	_causingActivity.runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						_causingActivity.showWaitGenerateDB();
-					}
-				});
+            	
             	
                 String CREATE_FONT_TABLE = "CREATE TABLE " + TABLE_HEX + "("
                         + KEY_CODEPOINT + " TEXT PRIMARY KEY," + KEY_HEX + " TEXT "+ ")";
@@ -115,6 +124,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         	        		fontBuff.clear();
 
         	        		count += 400;
+        	        		recordsLoaded = count;
+        	        		
+        	        		_notifier.changeProgress(count, DatabaseHandler.FILE_LINECOUNT);
         	        	}
         	        	
         	        }
@@ -123,17 +135,13 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         	        if (fontBuff.size()>0) {
         	        	addMultipleFontsx(fontBuff, dbThread);
                 		fontBuff.clear();
+                		
+                		DatabaseHandler.dirty = false;
+                		DatabaseHandler.finishedLoading = true;
+                		_notifier.finish(count, DatabaseHandler.FILE_LINECOUNT, 10000);  
         	        }
         	        
-        	        _causingActivity.runOnUiThread(new Runnable() {
-						
-						@Override
-						public void run() {
-							MainActivity m = (MainActivity)_causingActivity;
-							m.hideWaitGenerateDB();
-						}
-					});
-        	        Log.i("Database", "Finished inserting records"+count);
+        	        Log.d("Database", "Finished inserting "+count+" records");
         	        
         	    } catch(Exception e) {
         	    	Log.e("Database", "Error inserting records! "+e.getMessage());
@@ -205,31 +213,48 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         return null;
     }
     
-    public boolean verifyIntegrity() {
-		String tables = " SELECT name FROM sqlite_master " + " WHERE type='table'             "
-		        + "   AND name LIKE '"+TABLE_HEX+"' ";
-		
-		 if (_db.rawQuery(tables, null).getCount()<1) {
-			 return false;
-		 }
-         
-    	String countQuery = "SELECT  * FROM " + TABLE_HEX;
-		
-        Cursor cursor = _db.rawQuery(countQuery, null);
-        int cnt = cursor.getCount();
-        cursor.close();
- 
-        // If the line count doesn't match, reload
-        if (cnt != FILE_LINECOUNT) {
-        	onUpgrade(_db, 1, 1);
-        	return false;
-        }
-        
-        return true;
-    }
+//    public boolean verifyIntegrity() {
+//    	// Maybe db is generating, wait some time
+//    	int waited = 0;
+//    	
+//    	while(DatabaseHandler.dirty && waited < 10000) {
+//    		try {
+//    			Thread t = Thread.currentThread();
+//    			synchronized(t) {
+//    				t.sleep(500);	
+//    			}
+//				
+//				waited += 500;
+//			} catch (InterruptedException e) { return false; }
+//    	}
+//    	
+//		String tables = " SELECT name FROM sqlite_master " + " WHERE type='table'             "
+//		        + "   AND name LIKE '"+TABLE_HEX+"' ";
+//		
+//		 if (_db.rawQuery(tables, null).getCount()<1) {
+//			 return false;
+//		 }
+//         
+//    	String countQuery = "SELECT  * FROM " + TABLE_HEX;
+//		
+//        Cursor cursor = _db.rawQuery(countQuery, null);
+//        int cnt = cursor.getCount();
+//        cursor.close();
+// 
+//        // If the line count doesn't match, reload
+//        if (cnt != FILE_LINECOUNT) {
+//        	onUpgrade(_db, 1, 1);
+//        	return false;
+//        }
+//        
+//        return true;
+//    }
+    
     
 	public void open() throws SQLException {
 		_db = this.getWritableDatabase();
+		
+		//verifyIntegrity();
 	}
 
   public void close() {

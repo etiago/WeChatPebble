@@ -1,8 +1,5 @@
 package com.espinhasoftware.wechatpebble.service;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +23,6 @@ import com.getpebble.android.kit.PebbleKit.PebbleDataReceiver;
 import com.getpebble.android.kit.PebbleKit.PebbleNackReceiver;
 import com.getpebble.android.kit.util.PebbleDictionary;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -36,12 +30,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.RemoteException;
 import android.util.Log;
-import android.widget.Toast;
 
 public class PebbleCommService extends Service {
-	private PebbleMessage message;
+	private static PebbleMessage message;
 
 
     /**
@@ -55,15 +47,12 @@ public class PebbleCommService extends Service {
     static final int TYPE_DATA_PBL_MSG = 1;
     static final int TYPE_DATA_STR = 2;
     
-    static final int TYPE_NO_PINYIN = 1;
-    static final int TYPE_PINYIN = 2;
-    
     static final String KEY_MESSAGE = "KEY_MESSAGE";
 
     /**
      * Handler of incoming messages from clients.
      */
-    class HandleWeChatIncomingHandler extends Handler {
+    static class HandleWeChatIncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -75,11 +64,7 @@ public class PebbleCommService extends Service {
                 	} else if (msg.arg1 == PebbleCommService.TYPE_DATA_STR) {
                 		String s = msg.getData().getString(PebbleCommService.KEY_MESSAGE);
                 		
-                		if (msg.arg2 == TYPE_NO_PINYIN) {
-                			sendAlertToPebble(s, false);
-                		} else if (msg.arg2 == TYPE_PINYIN) {
-                			sendAlertToPebble(s, true);
-                		}
+                		sendAlertToPebble(s);
                 	}
                 	break;
                 default:
@@ -93,10 +78,12 @@ public class PebbleCommService extends Service {
      * Target we publish for clients to send messages to IncomingHandler.
      */
     final Messenger mMessengerHandleWeChat = new Messenger(new HandleWeChatIncomingHandler());
-
+    static Context _context;
+    
     @Override
     public void onCreate() {
     	message = new PebbleMessage(getApplicationContext());
+    	_context = getApplicationContext();
     	
     	PebbleKit.registerReceivedDataHandler(getApplicationContext(), new PebbleDataReceiver(PebbleMessage.WECHATPEBBLE_UUID) {
     		@Override
@@ -156,11 +143,7 @@ public class PebbleCommService extends Service {
 
     @Override
     public void onDestroy() {
-        // Cancel the persistent notification.
-        //mNM.cancel(R.string.remote_service_started);
 
-        // Tell the user we stopped.
-        //Toast.makeText(this, R.string.remote_service_stopped, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -172,37 +155,9 @@ public class PebbleCommService extends Service {
         return mMessengerHandleWeChat.getBinder();
     }
 
-    //////////
-    
-	///////
-	
-	///////
-	  /**
-	     * Sends alerts to the Pebble watch, as per the Pebble app's intents
-	     * @param alert Alert which to send to the watch.
-	     */
-	    private String parsePinyin(String alert) {
-	    	// This is the traditional Pebble alert which does not show Unicode characters
-	    	HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
-	    	format.setCaseType(HanyuPinyinCaseType.LOWERCASE);
-	    	format.setToneType(HanyuPinyinToneType.WITH_TONE_NUMBER);
-	    	format.setVCharType(HanyuPinyinVCharType.WITH_V);
-				
-	    	try {
-	    		// I know this is deprecated but there's no viable alternative...
-	    		alert = PinyinHelper.toHanyuPinyinString(alert, format , "");
-	    	} catch (BadHanyuPinyinOutputFormatCombination e) {
-	    		Log.e("Pinyin", "Failed to convert pinyin");
-	    	}
-			  
-	        return alert;
-	    }
+	  
 	    
-	    private void sendAlertToPebble(String alert, boolean usePinyin) {
-	    	if (usePinyin) {
-	    		alert = parsePinyin(alert);
-	    	}
-	    	
+	    private static void sendAlertToPebble(String alert) {
 	    	final Intent i = new Intent("com.getpebble.action.SEND_NOTIFICATION");
 
 	        final Map<String, String> data = new HashMap<String, String>();
@@ -215,11 +170,11 @@ public class PebbleCommService extends Service {
 	        i.putExtra("sender", "MyAndroidApp");
 	        i.putExtra("notificationData", notificationData);
 
-	        sendBroadcast(i);
+	        _context.sendBroadcast(i);
 	    }
 	    
-	    private void sendAlertToPebble(PebbleMessage pm, boolean reset) {
-	    	PebbleKit.startAppOnPebble(getApplicationContext(), PebbleMessage.WECHATPEBBLE_UUID);
+	    private static void sendAlertToPebble(PebbleMessage pm, boolean reset) {
+	    	PebbleKit.startAppOnPebble(_context, PebbleMessage.WECHATPEBBLE_UUID);
       	  	try {
       	  		Thread.currentThread().sleep(1000);
       	  	} catch (InterruptedException e) {
@@ -230,7 +185,7 @@ public class PebbleCommService extends Service {
       	  	sendChunk(reset);
 	    }
 	    
-	    public boolean sendChunk(boolean reset) {
+	    public static boolean sendChunk(boolean reset) {
 			int bytesWide = 18;
 			
 			// Defines how many bytes wide we have available
@@ -308,7 +263,7 @@ public class PebbleCommService extends Service {
 			if (reset) {
 				data.addBytes(PebbleMessage.PBL_RESET, new byte[]{'a'});
 			}
-			PebbleKit.sendDataToPebbleWithTransactionId(getApplicationContext(), PebbleMessage.WECHATPEBBLE_UUID, data, 1);
+			PebbleKit.sendDataToPebbleWithTransactionId(_context, PebbleMessage.WECHATPEBBLE_UUID, data, 1);
 			
 			return message.hasMore();
 		}
